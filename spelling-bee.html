@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spelling Bee Arena // RafayKapasi Learning Hub</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#a855f7">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .glass { background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .glow-purple { box-shadow: 0 0 25px rgba(168, 85, 247, 0.25); }
+        .glow-cyan { box-shadow: 0 0 25px rgba(6, 182, 212, 0.25); }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-[100dvh] flex flex-col items-center justify-between p-3 sm:p-6 selection:bg-purple-500 selection:text-white" onclick="unlockAudio()">
+
+    <!-- Top Header -->
+    <header class="w-full max-w-2xl flex flex-col sm:flex-row items-center justify-between gap-3 mb-4">
+        <a href="index.html" class="flex items-center gap-2">
+            <img src="assets/icons/logo.svg" alt="RafayKapasi Logo" class="h-10 w-auto">
+        </a>
+        
+        <div class="flex items-center space-x-2 w-full sm:w-auto justify-between sm:justify-end flex-wrap gap-y-2">
+            <!-- Accent Selection -->
+            <div class="glass px-2.5 py-1 rounded-full text-xs font-bold text-slate-300 flex items-center gap-1 border border-slate-800">
+                <span>🗣️</span>
+                <select id="accentSelect" onchange="changeAccent()" class="bg-slate-900 text-purple-300 font-bold focus:outline-none cursor-pointer rounded px-1 py-0.5 border border-slate-700">
+                    <option value="en-IN">🇮🇳 Indian</option>
+                    <option value="en-GB">🇬🇧 British</option>
+                    <option value="en-US">🇺🇸 US</option>
+                    <option value="en-AU">🇦🇺 Australian</option>
+                </select>
+            </div>
+
+            <!-- Sound Effects Toggle -->
+            <button id="sfxBtn" onclick="toggleSFX()" class="glass px-2.5 py-1 rounded-full text-xs font-bold text-emerald-400 border border-slate-800">
+                🔊 SFX On
+            </button>
+
+            <!-- Streak & XP -->
+            <div id="streakBadge" class="glass px-2.5 py-1 rounded-full text-xs font-bold text-cyan-400 flex items-center gap-1 glow-cyan">
+                🔥 <span id="streakCount">0</span>
+            </div>
+            <div id="xpBadge" class="glass px-2.5 py-1 rounded-full text-xs font-bold text-purple-400 flex items-center gap-1 glow-purple" title="Click to view rank">
+                ⚡ <span id="xpCount">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Rank Progress Bar -->
+    <div class="w-full max-w-2xl glass rounded-2xl px-4 py-2 mb-4 flex items-center justify-between text-xs">
+        <span class="font-bold text-slate-400">Rank: <span id="rankTitle" class="text-purple-400">Novice Speller</span></span>
+        <span id="rankProgress" class="font-semibold text-slate-500">0/100 XP to next rank</span>
+    </div>
+
+    <!-- Main Card Container -->
+    <main class="w-full max-w-2xl glass rounded-3xl p-4 sm:p-8 shadow-2xl relative overflow-hidden flex flex-col items-center my-auto">
+        
+        <!-- Setup Screen -->
+        <div id="setupScreen" class="w-full flex flex-col space-y-5">
+            <div class="text-center">
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-1">Spelling Bee Arena 🎧</h1>
+                <p class="text-slate-400 text-xs sm:text-sm">Listen to spoken words & type correct spellings across 2 consecutive sessions to master them.</p>
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Select Month</label>
+                    <select id="monthSelect" class="w-full bg-slate-900 border border-slate-800 rounded-2xl p-3.5 text-white font-medium focus:outline-none focus:border-purple-500 transition-all cursor-pointer">
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Select Week</label>
+                    <select id="weekSelect" class="w-full bg-slate-900 border border-slate-800 rounded-2xl p-3.5 text-white font-medium focus:outline-none focus:border-purple-500 transition-all cursor-pointer">
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 pt-2">
+                <button onclick="startMode('study')" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3.5 rounded-2xl transition-all border border-slate-700 active:scale-95 flex items-center justify-center gap-2 text-sm">
+                    📖 Study Words
+                </button>
+                <button onclick="startMode('test')" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold py-3.5 rounded-2xl transition-all shadow-lg shadow-purple-500/25 active:scale-95 flex items-center justify-center gap-2 text-sm">
+                    🎧 Audio Test
+                </button>
+            </div>
+
+            <!-- Manage Data Accordion -->
+            <div class="border-t border-slate-800 pt-3">
+                <button onclick="toggleDataPanel()" class="w-full text-xs text-slate-400 font-bold hover:text-white flex items-center justify-between">
+                    ⚙️ Manage Data / Custom Words
+                    <span id="dataPanelArrow">▼</span>
+                </button>
+                
+                <div id="dataPanel" class="hidden flex-col space-y-3 mt-3 pt-3 border-t border-slate-800/50">
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="resetProgressOnly()" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 p-2.5 rounded-xl text-xs font-bold">
+                            🔄 Reset Progress Only
+                        </button>
+                        <button onclick="resetFullDatabase()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 p-2.5 rounded-xl text-xs font-bold">
+                            💣 Reset Entire DB
+                        </button>
+                    </div>
+
+                    <div class="bg-slate-900/80 p-3 rounded-2xl space-y-2 border border-slate-800">
+                        <span class="text-xs font-bold text-purple-400 block">➕ Add Custom Word</span>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="text" id="customMonthInput" placeholder="Month (e.g. August)" class="bg-slate-950 text-xs p-2 rounded-xl border border-slate-800">
+                            <input type="text" id="customWeekInput" placeholder="Week (e.g. Week 1)" class="bg-slate-950 text-xs p-2 rounded-xl border border-slate-800">
+                        </div>
+                        <input type="text" id="customWordInput" placeholder="Word (e.g. resilience)" class="w-full bg-slate-950 text-xs p-2 rounded-xl border border-slate-800">
+                        <button onclick="addCustomWord()" class="w-full bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold py-2 rounded-xl">Add Word</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Study Mode Screen -->
+        <div id="studyScreen" class="w-full hidden flex-col space-y-5">
+            <div class="flex items-center justify-between w-full">
+                <button onclick="backToSetup()" class="text-xs font-bold text-slate-400 hover:text-white flex items-center gap-1 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800">
+                    ← Back
+                </button>
+                <span id="studyHeaderInfo" class="text-xs font-bold text-purple-400 uppercase tracking-wider"></span>
+            </div>
+
+            <div class="relative w-full bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 text-center min-h-[180px] flex flex-col items-center justify-center shadow-inner space-y-3">
+                <span id="studyWordIndex" class="absolute top-4 left-6 text-xs text-slate-500 font-bold">1 / 10</span>
+                <span id="studyMasteryBadge" class="absolute top-4 right-6 text-xs px-2.5 py-1 rounded-full font-bold"></span>
+                <h2 id="studyWord" class="text-3xl sm:text-4xl font-black text-white tracking-tight">Word</h2>
+                <button onclick="speakCurrentStudyWord()" class="mt-2 bg-purple-500/20 text-purple-300 border border-purple-500/30 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-purple-500/30">
+                    🔊 Listen Audio <span class="text-[10px] opacity-60">(Space)</span>
+                </button>
+            </div>
+
+            <div class="flex items-center justify-between w-full gap-3">
+                <button onclick="prevStudyWord()" class="flex-1 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 font-bold py-3 rounded-2xl transition-all text-sm">← Prev (Left)</button>
+                <button onclick="nextStudyWord()" class="flex-1 bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-2xl transition-all shadow-lg shadow-purple-600/20 text-sm">Next (Right) →</button>
+            </div>
+        </div>
+
+        <!-- Audio Spelling Test Screen -->
+        <div id="testScreen" class="w-full hidden flex-col space-y-5">
+            <div class="flex items-center justify-between w-full">
+                <button onclick="backToSetup()" class="text-xs font-bold text-slate-400 hover:text-white flex items-center gap-1 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800">
+                    ← Quit Test
+                </button>
+                <span id="testProgress" class="text-xs font-bold text-cyan-400 bg-slate-900 px-3 py-1 rounded-xl border border-slate-800">Word 1 of 10</span>
+            </div>
+
+            <div class="w-full bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 text-center flex flex-col items-center justify-center">
+                <p class="text-xs font-bold text-purple-400 uppercase tracking-wider mb-3">Listen closely and spell the word</p>
+                
+                <button onclick="speakTargetWord()" class="bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white p-4 sm:p-5 rounded-full shadow-lg glow-purple mb-2 transition-transform active:scale-90 flex items-center justify-center">
+                    <svg class="w-7 h-7 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+                </button>
+                <span class="text-[11px] text-slate-400">Press <kbd class="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 text-purple-300 font-mono">Space</kbd> to replay</span>
+
+                <div id="feedbackBanner" class="hidden text-xs font-bold px-4 py-2 rounded-xl mt-3 w-full text-center border"></div>
+            </div>
+
+            <form id="testForm" onsubmit="submitSpelling(event)" class="space-y-3 w-full">
+                <input type="text" id="spellingInput" autocomplete="off" placeholder="Type word here..." class="w-full bg-slate-900 border border-slate-800 rounded-2xl p-3.5 sm:p-4 text-center text-lg sm:text-xl font-bold text-white focus:outline-none focus:border-purple-500 transition-all tracking-wide">
+                <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold py-3.5 rounded-2xl transition-all shadow-lg active:scale-95 text-sm">
+                    Submit Word (Enter ↵)
+                </button>
+            </form>
+        </div>
+
+        <!-- Completion Screen -->
+        <div id="completeScreen" class="w-full hidden flex-col items-center text-center space-y-5 py-4">
+            <div id="completionEmoji" class="text-5xl sm:text-6xl animate-bounce">🏆</div>
+            <div>
+                <h2 id="completionTitle" class="text-2xl sm:text-3xl font-extrabold text-white mb-1">Session Complete! ✨</h2>
+                <p id="completionMessage" class="text-slate-400 text-xs sm:text-sm">Your session results have been recorded into memory.</p>
+            </div>
+
+            <div class="w-full space-y-2">
+                <button id="practiceMissedBtn" onclick="startPracticeMissedOnly()" class="hidden w-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold py-3 rounded-2xl transition-all text-sm">
+                    🎯 Practice Missed Words Only (<span id="missedCount">0</span>)
+                </button>
+                <button onclick="backToSetup()" class="w-full bg-gradient-to-r from-purple-600 to-cyan-500 text-white font-bold py-3.5 rounded-2xl transition-all shadow-xl shadow-purple-500/20 text-sm">
+                    Back to Dashboard
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="text-slate-500 text-xs mt-4">
+        RafayKapasi Learning Hub • Audio Spelling Engine 🚀
+    </footer>
+
+    <script>
+        const defaultVocabData = {
+            "August": {
+                "Week 2": ["myth", "whimsical", "determined", "assess", "prejudice", "innocent", "prologue", "cartographer", "troublesome", "inundation"],
+                "Week 3": ["remote", "evaluate", "summarize", "drought", "undertakes", "resentful", "domestic", "demonstrate", "tyranny", "sanctuary"],
+                "Week 4": ["ventured", "thoughtful", "seminary", "overcast", "stride", "coastline", "fearfully", "peasant", "decipher", "abandoned"]
+            },
+            "September": {
+                "Week 1": ["savage", "gallop", "scramble", "clutch", "plunge", "analyze", "narrative", "unscrupulous", "artifacts", "underground"],
+                "Week 2": ["frequently", "overwhelmed", "scorching", "glide", "misty", "examine", "recount", "monarchy", "gridlock", "equator"],
+                "Week 3": ["frustrated", "affectionate", "cautious", "scurry", "tremendous", "critically", "fiction", "hypocaust", "dialect", "collapsed"],
+                "Week 4": ["sympathetic", "sprint", "anxious", "flee", "native", "opportunity", "charming", "airshaft", "location", "valley"],
+                "Week 5": ["optimistic", "tiptoe", "melancholy", "establish", "extension", "somber", "display", "inscription", "vague", "horizon"]
+            },
+            "October": {
+                "Week 1": ["prominent", "discuss", "factual", "enhances", "highlight", "outcome", "persuasive", "acquaintance", "steep", "magnetic"],
+                "Week 2": ["figurative", "literal", "ellipsis", "misconception", "nobel", "severely", "imply", "compass", "opaque", "basin"],
+                "Week 3": ["modified", "consolidate", "hesitation", "persuade", "victory", "drawn", "journalist", "waterfall", "depth", "evidence"],
+                "Week 4": ["widespread", "guardian", "suspicious", "skim", "emphasis", "fray", "article", "stigma", "disperse", "vegetation"]
+            },
+            "November": {
+                "Week 1": ["pronunciation", "distress", "eventually", "gleam", "companion", "quotation", "feature", "fertile", "translucent", "irrigation"],
+                "Week 2": ["respectful", "discovery", "graze", "devoting", "conclude", "biography", "notetaking", "erosion", "fragment", "elevated"],
+                "Week 3": ["paused", "lightning", "wound", "appealing", "landscape", "onlooker", "assessment", "atmosphere", "plain", "reservoir"],
+                "Week 4": ["husk", "inverted", "broadcast", "awe", "justify", "chanted", "organise", "underlying", "sediment", "dam"]
+            }
+        };
+
+        let vocabData = JSON.parse(localStorage.getItem('lexi_vocab_db')) || JSON.parse(JSON.stringify(defaultVocabData));
+
+        let currentMonth = "";
+        let currentWeek = "";
+        let wordList = [];
+        let streak = parseInt(localStorage.getItem('lexi_streak') || '0');
+        let xp = parseInt(localStorage.getItem('lexi_xp') || '0');
+        let selectedLang = localStorage.getItem('lexi_accent') || 'en-IN';
+        let sfxEnabled = localStorage.getItem('lexi_sfx') !== 'false';
+
+        const ranks = [
+            { minXP: 0, title: "Novice Speller" },
+            { minXP: 100, title: "Word Scholar" },
+            { minXP: 300, title: "Spelling Warrior" },
+            { minXP: 600, title: "Lexicon Master" },
+            { minXP: 1000, title: "Grand Champion 👑" }
+        ];
+
+        let studyIndex = 0;
+        let sessionActiveWords = [];
+        let missedInSession = [];
+        let currentTestIndex = 0;
+        let isAwaitingNext = false;
+
+        let audioCtx = null;
+
+        function unlockAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            if (window.speechSynthesis.paused) {
+                window.speechSynthesis.resume();
+            }
+        }
+
+        function playSound(type) {
+            if (!sfxEnabled) return;
+            unlockAudio();
+            if (!audioCtx) return;
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'correct') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.25);
+            } else if (type === 'error') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(130, audioCtx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'win') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(554.37, audioCtx.currentTime + 0.1);
+                osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.4);
+            }
+        }
+
+        function toggleSFX() {
+            sfxEnabled = !sfxEnabled;
+            localStorage.setItem('lexi_sfx', sfxEnabled);
+            document.getElementById('sfxBtn').innerText = sfxEnabled ? "🔊 SFX On" : "🔇 SFX Off";
+            document.getElementById('sfxBtn').className = sfxEnabled 
+                ? "glass px-2.5 py-1 rounded-full text-xs font-bold text-emerald-400 border border-slate-800"
+                : "glass px-2.5 py-1 rounded-full text-xs font-bold text-slate-500 border border-slate-800";
+        }
+
+        document.getElementById('streakCount').innerText = streak;
+        document.getElementById('xpCount').innerText = xp;
+        document.getElementById('accentSelect').value = selectedLang;
+        updateRankUI();
+
+        const monthSelect = document.getElementById('monthSelect');
+        const weekSelect = document.getElementById('weekSelect');
+
+        function initSetup() {
+            monthSelect.innerHTML = "";
+            Object.keys(vocabData).forEach(month => {
+                let opt = document.createElement('option');
+                opt.value = month;
+                opt.textContent = month;
+                monthSelect.appendChild(opt);
+            });
+            updateWeeks();
+        }
+
+        monthSelect.addEventListener('change', updateWeeks);
+
+        function updateWeeks() {
+            const selectedMonth = monthSelect.value;
+            weekSelect.innerHTML = "";
+            if (vocabData[selectedMonth]) {
+                Object.keys(vocabData[selectedMonth]).forEach(week => {
+                    let opt = document.createElement('option');
+                    opt.value = week;
+                    opt.textContent = week;
+                    weekSelect.appendChild(opt);
+                });
+            }
+        }
+
+        initSetup();
+
+        function changeAccent() {
+            selectedLang = accentSelect.value;
+            localStorage.setItem('lexi_accent', selectedLang);
+            const testScreen = document.getElementById('testScreen');
+            const studyScreen = document.getElementById('studyScreen');
+
+            if (!testScreen.classList.contains('hidden') && sessionActiveWords.length > 0 && !isAwaitingNext) {
+                speakTargetWord();
+            } else if (!studyScreen.classList.contains('hidden')) {
+                speakCurrentStudyWord();
+            }
+        }
+
+        function switchScreen(screenId) {
+            ['setupScreen', 'studyScreen', 'testScreen', 'completeScreen'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+                document.getElementById(id).classList.remove('flex');
+            });
+            const target = document.getElementById(screenId);
+            target.classList.remove('hidden');
+            target.classList.add('flex');
+        }
+
+        function getWordStats(word) {
+            const raw = localStorage.getItem(`speller_${word}`);
+            if (!raw) return { streak: 0, mastered: false };
+            return JSON.parse(raw);
+        }
+
+        function saveWordStats(word, stats) {
+            localStorage.setItem(`speller_${word}`, JSON.stringify(stats));
+        }
+
+        function startMode(mode) {
+            unlockAudio();
+            currentMonth = monthSelect.value;
+            currentWeek = weekSelect.value;
+            wordList = vocabData[currentMonth]?.[currentWeek] || [];
+
+            if (wordList.length === 0) {
+                alert("No words found in this week!");
+                return;
+            }
+
+            if (mode === 'study') {
+                studyIndex = 0;
+                document.getElementById('studyHeaderInfo').innerText = `${currentMonth} • ${currentWeek}`;
+                renderStudyWord();
+                switchScreen('studyScreen');
+            } else {
+                sessionActiveWords = wordList.filter(w => !getWordStats(w).mastered);
+                missedInSession = [];
+
+                if (sessionActiveWords.length === 0) {
+                    document.getElementById('completionEmoji').innerText = "⭐";
+                    document.getElementById('completionTitle').innerText = "All Words Mastered!";
+                    document.getElementById('completionMessage').innerText = `You have already mastered every word in ${currentMonth} ${currentWeek}!`;
+                    document.getElementById('practiceMissedBtn').classList.add('hidden');
+                    switchScreen('completeScreen');
+                    return;
+                }
+
+                currentTestIndex = 0;
+                isAwaitingNext = false;
+                switchScreen('testScreen');
+                loadTestQuestion();
+            }
+        }
+
+        function backToSetup() {
+            window.speechSynthesis.cancel();
+            switchScreen('setupScreen');
+        }
+
+        function speakWord(word) {
+            unlockAudio();
+            window.speechSynthesis.cancel();
+
+            setTimeout(() => {
+                const utterance = new SpeechSynthesisUtterance(word);
+                utterance.rate = 0.8;
+                utterance.pitch = 1.0;
+
+                const voices = window.speechSynthesis.getVoices();
+                const matchingVoice = voices.find(v => v.lang.replace('_', '-').toLowerCase().includes(selectedLang.toLowerCase())) 
+                                   || voices.find(v => v.lang.toLowerCase().startsWith('en'));
+
+                if (matchingVoice) {
+                    utterance.voice = matchingVoice;
+                    utterance.lang = matchingVoice.lang;
+                } else {
+                    utterance.lang = selectedLang;
+                }
+
+                window.speechSynthesis.speak(utterance);
+            }, 20);
+        }
+
+        window.speechSynthesis.onvoiceschanged = () => {
+            window.speechSynthesis.getVoices();
+        };
+
+        function renderStudyWord() {
+            const word = wordList[studyIndex];
+            const stats = getWordStats(word);
+
+            document.getElementById('studyWordIndex').innerText = `${studyIndex + 1} / ${wordList.length}`;
+            document.getElementById('studyWord').innerText = word;
+
+            const badge = document.getElementById('studyMasteryBadge');
+            if (stats.mastered) {
+                badge.className = "absolute top-4 right-6 text-xs px-2.5 py-1 rounded-full font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+                badge.innerText = "Mastered ✨";
+            } else if (stats.streak === 1) {
+                badge.className = "absolute top-4 right-6 text-xs px-2.5 py-1 rounded-full font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30";
+                badge.innerText = "1/2 Wins 🎯";
+            } else {
+                badge.className = "absolute top-4 right-6 text-xs px-2.5 py-1 rounded-full font-bold bg-slate-800 text-slate-400 border border-slate-700";
+                badge.innerText = "Unmastered";
+            }
+        }
+
+        function speakCurrentStudyWord() { speakWord(wordList[studyIndex]); }
+        function nextStudyWord() { studyIndex = (studyIndex + 1) % wordList.length; renderStudyWord(); }
+        function prevStudyWord() { studyIndex = (studyIndex - 1 + wordList.length) % wordList.length; renderStudyWord(); }
+
+        function loadTestQuestion() {
+            if (currentTestIndex >= sessionActiveWords.length) {
+                playSound('win');
+                document.getElementById('completionEmoji').innerText = "🏆";
+                document.getElementById('completionTitle').innerText = "Session Complete! ✨";
+                document.getElementById('completionMessage').innerText = "Session recorded! Words spelled correctly in 2 consecutive tests without errors are now fully mastered.";
+
+                const missedBtn = document.getElementById('practiceMissedBtn');
+                if (missedInSession.length > 0) {
+                    document.getElementById('missedCount').innerText = missedInSession.length;
+                    missedBtn.classList.remove('hidden');
+                } else {
+                    missedBtn.classList.add('hidden');
+                }
+
+                switchScreen('completeScreen');
+                xp += 50;
+                streak += 1;
+                updateStats();
+                return;
+            }
+
+            const currentWord = sessionActiveWords[currentTestIndex];
+            document.getElementById('testProgress').innerText = `Word ${currentTestIndex + 1} of ${sessionActiveWords.length}`;
+            
+            const input = document.getElementById('spellingInput');
+            input.value = "";
+            input.disabled = false;
+            setTimeout(() => input.focus(), 100);
+
+            const banner = document.getElementById('feedbackBanner');
+            banner.classList.add('hidden');
+
+            document.getElementById('submitBtn').innerText = "Submit Word (Enter ↵)";
+            isAwaitingNext = false;
+
+            speakWord(currentWord);
+        }
+
+        function speakTargetWord() { speakWord(sessionActiveWords[currentTestIndex]); }
+
+        function submitSpelling(e) {
+            if (e) e.preventDefault();
+            const input = document.getElementById('spellingInput');
+            const banner = document.getElementById('feedbackBanner');
+            const currentWord = sessionActiveWords[currentTestIndex];
+
+            if (isAwaitingNext) {
+                currentTestIndex++;
+                loadTestQuestion();
+                return;
+            }
+
+            const userInput = input.value.trim().toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+            if (!userInput) return;
+
+            let stats = getWordStats(currentWord);
+
+            if (userInput === currentWord.toLowerCase()) {
+                playSound('correct');
+                stats.streak += 1;
+                if (stats.streak >= 2) stats.mastered = true;
+                saveWordStats(currentWord, stats);
+
+                banner.className = "text-xs font-bold px-4 py-2 rounded-xl mt-3 w-full text-center bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+                banner.innerText = stats.mastered ? "Correct! Word is now MASTERED ⭐" : `Correct! (${stats.streak}/2 consecutive sessions cleared)`;
+                banner.classList.remove('hidden');
+
+                xp += 10;
+                updateStats();
+
+                input.disabled = true;
+                isAwaitingNext = true;
+                document.getElementById('submitBtn').innerText = "Next Word → (Press Enter)";
+            } else {
+                playSound('error');
+                stats.streak = 0;
+                stats.mastered = false;
+                saveWordStats(currentWord, stats);
+
+                if (!missedInSession.includes(currentWord)) {
+                    missedInSession.push(currentWord);
+                }
+
+                banner.className = "text-xs font-bold px-4 py-2 rounded-xl mt-3 w-full text-center bg-rose-500/10 text-rose-400 border-rose-500/20";
+                banner.innerText = `Incorrect! Correct spelling: ${currentWord}`;
+                banner.classList.remove('hidden');
+
+                input.disabled = true;
+                isAwaitingNext = true;
+                document.getElementById('submitBtn').innerText = "Next Word → (Press Enter)";
+            }
+        }
+
+        function startPracticeMissedOnly() {
+            sessionActiveWords = [...missedInSession];
+            missedInSession = [];
+            currentTestIndex = 0;
+            isAwaitingNext = false;
+            switchScreen('testScreen');
+            loadTestQuestion();
+        }
+
+        document.addEventListener('keydown', (e) => {
+            const testScreen = document.getElementById('testScreen');
+            const studyScreen = document.getElementById('studyScreen');
+
+            if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
+                e.preventDefault();
+                if (!testScreen.classList.contains('hidden')) speakTargetWord();
+                else if (!studyScreen.classList.contains('hidden')) speakCurrentStudyWord();
+            }
+
+            if (!studyScreen.classList.contains('hidden')) {
+                if (e.code === 'ArrowRight') nextStudyWord();
+                if (e.code === 'ArrowLeft') prevStudyWord();
+            }
+        });
+
+        function updateStats() {
+            document.getElementById('streakCount').innerText = streak;
+            document.getElementById('xpCount').innerText = xp;
+            localStorage.setItem('lexi_streak', streak);
+            localStorage.setItem('lexi_xp', xp);
+            updateRankUI();
+        }
+
+        function updateRankUI() {
+            let currentRank = ranks[0];
+            let nextRank = ranks[1];
+
+            for (let i = 0; i < ranks.length; i++) {
+                if (xp >= ranks[i].minXP) {
+                    currentRank = ranks[i];
+                    nextRank = ranks[i + 1] || ranks[i];
+                }
+            }
+
+            document.getElementById('rankTitle').innerText = currentRank.title;
+            if (nextRank !== currentRank) {
+                document.getElementById('rankProgress').innerText = `${xp}/${nextRank.minXP} XP to next rank`;
+            } else {
+                document.getElementById('rankProgress').innerText = `Max Rank Achieved! 🏆`;
+            }
+        }
+
+        function toggleDataPanel() {
+            const panel = document.getElementById('dataPanel');
+            const arrow = document.getElementById('dataPanelArrow');
+            panel.classList.toggle('hidden');
+            panel.classList.toggle('flex');
+            arrow.innerText = panel.classList.contains('hidden') ? '▼' : '▲';
+        }
+
+        function resetProgressOnly() {
+            if (confirm("Reset all test streaks, XP, and mastered flags? Word lists will stay untouched.")) {
+                Object.keys(localStorage).forEach(key => {
+                    if (key.startsWith('speller_') || key.startsWith('lexi_')) {
+                        localStorage.removeItem(key);
+                    }
+                });
+                streak = 0;
+                xp = 0;
+                updateStats();
+                alert("Progress reset completed!");
+                initSetup();
+            }
+        }
+
+        function resetFullDatabase() {
+            if (confirm("Reset full database to original defaults? All custom words and progress will be deleted.")) {
+                localStorage.clear();
+                vocabData = JSON.parse(JSON.stringify(defaultVocabData));
+                streak = 0;
+                xp = 0;
+                updateStats();
+                initSetup();
+                alert("Database restored to defaults!");
+            }
+        }
+
+        function addCustomWord() {
+            const month = document.getElementById('customMonthInput').value.trim();
+            const week = document.getElementById('customWeekInput').value.trim();
+            const word = document.getElementById('customWordInput').value.trim().toLowerCase();
+
+            if (!month || !week || !word) {
+                alert("Please fill out Month, Week, and Word fields.");
+                return;
+            }
+
+            if (!vocabData[month]) vocabData[month] = {};
+            if (!vocabData[month][week]) vocabData[month][week] = [];
+
+            if (!vocabData[month][week].includes(word)) {
+                vocabData[month][week].push(word);
+                localStorage.setItem('lexi_vocab_db', JSON.stringify(vocabData));
+                alert(`Added "${word}" to ${month} > ${week}!`);
+                document.getElementById('customWordInput').value = "";
+                initSetup();
+            } else {
+                alert("Word already exists in this week!");
+            }
+        }
+    </script>
+</body>
+</html>

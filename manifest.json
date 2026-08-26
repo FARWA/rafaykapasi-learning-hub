@@ -1,0 +1,18 @@
+
+
+{
+  "short_name": "RK Hub",
+  "name": "RafayKapasi Learning Hub",
+  "icons": [
+    {
+      "src": "/assets/icons/logo.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ],
+  "start_url": "/index.html",
+  "background_color": "#020617",
+  "theme_color": "#a855f7",
+  "display": "standalone",
+  "orientation": "portrait"
+}
