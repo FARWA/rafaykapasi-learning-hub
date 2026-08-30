@@ -4,9 +4,9 @@ const ASSETS = [
   './',
   'index.html',
   'spelling-bee.html',
+  'cucu.html',
   'manifest.json',
-  'assets/icons/logo.svg',
-  'games/cucu.html'
+  'logo.svg'
 ];
 
 self.addEventListener('install', (e) => {
